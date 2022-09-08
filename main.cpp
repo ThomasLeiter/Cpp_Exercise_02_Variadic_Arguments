@@ -45,7 +45,11 @@ void cstyle_printf(std::string fmt, ...)
 			std::cout << fmt[i];
 		}
 	}
+	va_end(args);
 }
+
+template<typename... Ts>
+void cpp_printf(const std::string &fmt, Ts...);
 
 /*
  * Naive implementation of an output function
@@ -54,6 +58,7 @@ void cstyle_printf(std::string fmt, ...)
  *
  * Recursion anchor without additional parameters.
  */
+template<>
 void cpp_printf(const std::string &fmt)
 {
 	std::cout << fmt;
@@ -75,7 +80,7 @@ void cpp_printf(const std::string &fmt, Head head, Tail... tail)
 		if (*it == '%'){
 			std::cout << head;
 			// Next argument found. Recurse and exit.
-			cpp_printf(std::string(it,fmt.cend()),tail ...);
+			cpp_printf(std::string(++it,fmt.cend()),tail ...);
 			return;
 		} else {
 			std::cout << *it;
@@ -86,5 +91,5 @@ void cpp_printf(const std::string &fmt, Head head, Tail... tail)
 int main()
 {
 	cstyle_printf("The %s programming language is from year %d. \nCurrent version C++%d. GCC support since version %f.\n", "C++", 1985, 20, 10.1);
-	cpp_printf("The %s programming language is from year %. \nCurrent version C++%. GCC support since version %.\n", "C++", 1985, 20, 10.1);
+	cpp_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n", "C++", 1985, 20, 10.1);
 }
