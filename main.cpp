@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdarg>
 #include <vector>
+#include <tuple>
 
 /*
  * Naive implementation of an output function
@@ -13,10 +14,10 @@ void cstyle_printf(std::string fmt, ...)
 {
 	// Get the variadic argument list i.e. (...)
 	std::va_list args;
-	// Tell the compiler that this list 
+	// Tell the compiler that this list
 	// starts behind parameter fmt.
 	va_start(args, fmt);
-	// Parse fmt string and replace with 
+	// Parse fmt string and replace with
 	// var_args where appropriate
 	for (int i = 0; i < fmt.length(); ++i)
 	{
@@ -49,7 +50,7 @@ void cstyle_printf(std::string fmt, ...)
 	va_end(args);
 }
 
-template<typename... Ts>
+template <typename... Ts>
 void cpp_printf(const std::string &fmt, Ts...);
 
 /*
@@ -59,7 +60,7 @@ void cpp_printf(const std::string &fmt, Ts...);
  *
  * Recursion anchor without additional parameters.
  */
-template<>
+template <>
 void cpp_printf(const std::string &fmt)
 {
 	std::cout << fmt;
@@ -77,75 +78,151 @@ void cpp_printf(const std::string &fmt)
 template <typename Head, typename... Tail>
 void cpp_printf(const std::string &fmt, Head head, Tail... tail)
 {
-	for (auto it = fmt.cbegin(); it != fmt.cend(); ++it){
-		if (*it == '%'){
+	for (auto it = fmt.cbegin(); it != fmt.cend(); ++it)
+	{
+		if (*it == '%')
+		{
 			std::cout << head;
 			// Next argument found. Recurse and exit.
-			cpp_printf(std::string(++it,fmt.cend()),tail ...);
+			cpp_printf(std::string(++it, fmt.cend()), tail...);
 			return;
-		} else {
+		}
+		else
+		{
 			std::cout << *it;
 		}
 	}
 }
 
-template<typename T>
-/* 
- * Prints out the string fmt, 
+template <int I = 0, typename... Ts>
+/*
+ * Prints out the string fmt,
  * replacing all instances of '%'
- * with arguments from vector args.
- * Type T will usually be inferred 
+ * with arguments from tuple args.
+ * Types Ts will usually be inferred
  * by the compiler.
  * 
- * Undefined behaviour if args.size() 
- * does not match the number of
- * placeholders in fmt.
- */
-void vector_printf(const std::string &fmt, const std::vector<T>& args){
-	// Iterator for the std::vector
-	auto vit = args.cbegin(); 
+ * Recursion anchor for empty tuple.
+ */ 
+typename std::enable_if<I == sizeof...(Ts), void>::type
+tuple_printf(const std::string &fmt, const std::tuple<Ts...> &args)
+{
+	std::cout << fmt;
+}
+
+template <int I = 0, typename... Ts>
+/*
+ * Prints out the string fmt,
+ * replacing all instances of '%'
+ * with arguments from tuple args.
+ * Types Ts will usually be inferred
+ * by the compiler.
+ * 
+ * Recursive method for non-empty tuples.
+ */ 
+	typename std::enable_if < I<sizeof...(Ts), void>::type
+							  tuple_printf(const std::string &fmt, const std::tuple<Ts...> &args)
+{
 	// Iterate over fmt and output
-	for (auto sit = fmt.cbegin(); sit != fmt.cend(); ++sit){
-		if (*sit == '%'){
-			std::cout << *vit++;
-		} else {
+	for (auto sit = fmt.cbegin(); sit != fmt.cend(); ++sit)
+	{
+		if (*sit == '%')
+		{
+			std::cout << std::get<I>(args);
+			tuple_printf<I + 1>(std::string(++sit, fmt.cend()), args);
+			return;
+		}
+		else
+		{
 			std::cout << *sit;
 		}
 	}
 }
 
-template<typename T>
-/* 
- * Prints out the string fmt, 
+template <typename T>
+/*
+ * Prints out the string fmt,
+ * replacing all instances of '%'
+ * with arguments from vector args.
+ * Type T will usually be inferred
+ * by the compiler.
+ *
+ * Undefined behaviour if args.size()
+ * does not match the number of
+ * placeholders in fmt.
+ */
+void vector_printf(const std::string &fmt, const std::vector<T> &args)
+{
+	// Iterator for the std::vector
+	auto vit = args.cbegin();
+	// Iterate over fmt and output
+	for (auto sit = fmt.cbegin(); sit != fmt.cend(); ++sit)
+	{
+		if (*sit == '%')
+		{
+			std::cout << *vit++;
+		}
+		else
+		{
+			std::cout << *sit;
+		}
+	}
+}
+
+template <typename T>
+/*
+ * Prints out the string fmt,
  * replacing all instances of '%'
  * with arguments from initializer_list args.
  * Type T cannot be inferred by
  * the compiler and has to be given!
- * 
- * Undefined behaviour if args.size() 
+ *
+ * Undefined behaviour if args.size()
  * does not match the number of
  * placeholders in fmt.
  */
-void init_list_printf(const std::string &fmt, std::initializer_list<T> args){
+void init_list_printf(const std::string &fmt, std::initializer_list<T> args)
+{
 	// Iterator for std::initializer_list
 	// Note that there is no constant iterator cbegin()!
 	auto vit = args.begin();
-	for (auto sit = fmt.begin(); sit != fmt.end(); ++sit){
-		if (*sit == '%'){
+	for (auto sit = fmt.begin(); sit != fmt.end(); ++sit)
+	{
+		if (*sit == '%')
+		{
 			std::cout << *vit++;
-		} else {
+		}
+		else
+		{
 			std::cout << *sit;
 		}
 	}
 }
-
-
 
 int main()
 {
 	cstyle_printf("The %s programming language is from year %d. \nCurrent version C++%d. GCC support since version %f.\n\n", "C++", 1985, 20, 10.1);
 	cpp_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n\n", "C++", 1985, 20, 10.1);
+	tuple_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n\n", std::make_tuple("C++", 1985, 20, 10.1));
 
-	vector_printf("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", std::vector{3,1,2});
-	init_list_printf<int>("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", {3,1,2});
+	vector_printf("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", std::vector{3, 1, 2});
+	init_list_printf<int>("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", {3, 1, 2});
+
+	/*
+	 * Expected output:
+	 *
+	The C++ programming language is from year 1985. 
+	Current version C++20. GCC support since version 10.1.
+
+	The C++ programming language is from year 1985. 
+	Current version C++20. GCC support since version 10.1.
+
+	The C++ programming language is from year 1985.
+	Current version C++20. GCC support since version 10.1.
+
+	3 blind mice, hiding from 1 cat. 2 cute, isn't it?
+
+	3 blind mice, hiding from 1 cat. 2 cute, isn't it?
+	 */
+
 }
