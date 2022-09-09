@@ -146,6 +146,6 @@ int main()
 	cstyle_printf("The %s programming language is from year %d. \nCurrent version C++%d. GCC support since version %f.\n\n", "C++", 1985, 20, 10.1);
 	cpp_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n\n", "C++", 1985, 20, 10.1);
 
-	vector_printf("% ist eins und % ist drei, drum addier noch %erlei ...\n\n", std::vector{1,3,2});
-	init_list_printf<int>("% ist eins und % ist drei, drum addier noch %erlei ...\n\n", {1,3,2});
+	vector_printf("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", std::vector{3,1,2});
+	init_list_printf<int>("% blind mice, hiding from % cat. 2 cute, isn't it?\n\n", {3,1,2});
 }
