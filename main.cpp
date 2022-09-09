@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <cstdarg>
+#include <vector>
 
 /*
  * Naive implementation of an output function
@@ -88,8 +89,63 @@ void cpp_printf(const std::string &fmt, Head head, Tail... tail)
 	}
 }
 
+template<typename T>
+/* 
+ * Prints out the string fmt, 
+ * replacing all instances of '%'
+ * with arguments from vector args.
+ * Type T will usually be inferred 
+ * by the compiler.
+ * 
+ * Undefined behaviour if args.size() 
+ * does not match the number of
+ * placeholders in fmt.
+ */
+void vector_printf(const std::string &fmt, const std::vector<T>& args){
+	// Iterator for the std::vector
+	auto vit = args.cbegin(); 
+	// Iterate over fmt and output
+	for (auto sit = fmt.cbegin(); sit != fmt.cend(); ++sit){
+		if (*sit == '%'){
+			std::cout << *vit++;
+		} else {
+			std::cout << *sit;
+		}
+	}
+}
+
+template<typename T>
+/* 
+ * Prints out the string fmt, 
+ * replacing all instances of '%'
+ * with arguments from initializer_list args.
+ * Type T cannot be inferred by
+ * the compiler and has to be given!
+ * 
+ * Undefined behaviour if args.size() 
+ * does not match the number of
+ * placeholders in fmt.
+ */
+void init_list_printf(const std::string &fmt, std::initializer_list<T> args){
+	// Iterator for std::initializer_list
+	// Note that there is no constant iterator cbegin()!
+	auto vit = args.begin();
+	for (auto sit = fmt.begin(); sit != fmt.end(); ++sit){
+		if (*sit == '%'){
+			std::cout << *vit++;
+		} else {
+			std::cout << *sit;
+		}
+	}
+}
+
+
+
 int main()
 {
-	cstyle_printf("The %s programming language is from year %d. \nCurrent version C++%d. GCC support since version %f.\n", "C++", 1985, 20, 10.1);
-	cpp_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n", "C++", 1985, 20, 10.1);
+	cstyle_printf("The %s programming language is from year %d. \nCurrent version C++%d. GCC support since version %f.\n\n", "C++", 1985, 20, 10.1);
+	cpp_printf("The % programming language is from year %. \nCurrent version C++%. GCC support since version %.\n\n", "C++", 1985, 20, 10.1);
+
+	vector_printf("% ist eins und % ist drei, drum addier noch %erlei ...\n\n", std::vector{1,3,2});
+	init_list_printf<int>("% ist eins und % ist drei, drum addier noch %erlei ...\n\n", {1,3,2});
 }
